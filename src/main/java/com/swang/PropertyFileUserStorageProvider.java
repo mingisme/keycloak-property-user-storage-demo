@@ -10,6 +10,7 @@ import org.keycloak.models.*;
 import org.keycloak.storage.StorageId;
 import org.keycloak.storage.UserStorageProvider;
 import org.keycloak.storage.adapter.AbstractUserAdapter;
+import org.keycloak.storage.adapter.AbstractUserAdapterFederatedStorage;
 import org.keycloak.storage.user.UserLookupProvider;
 import org.keycloak.storage.user.UserQueryProvider;
 import org.keycloak.storage.user.UserRegistrationProvider;
@@ -125,10 +126,19 @@ public class PropertyFileUserStorageProvider implements UserStorageProvider,
     }
 
     protected UserModel createAdapter(RealmModel realm, final String username) {
-        return new AbstractUserAdapter(session, realm, model) {
+        return new AbstractUserAdapterFederatedStorage(session, realm, model) {
             @Override
             public String getUsername() {
                 return username;
+            }
+
+            @Override
+            public void setUsername(String username) {
+                String pw = (String)properties.remove(username);
+                if (pw != null) {
+                    properties.put(username, pw);
+                    save();
+                }
             }
         };
     }
